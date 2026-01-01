@@ -1,23 +1,23 @@
 # Learning Without Memory
 
-Learning Without Memory is an experiment that explores whether a Large Language Model (LLM) can adapt its behavior without storing conversation history or training on past data.
+This project explores whether a Large Language Model can adapt its behavior without storing conversation history or relying on traditional training methods.
 
-Instead of remembering previous interactions, the system learns by adjusting generation parameters (such as temperature, verbosity, and repetition penalty) based on how well each response matches the desired outcome.
+Rather than remembering previous interactions, the system adjusts generation parameters like temperature, verbosity, and repetition penalty based on how well each response meets the desired outcome.
 
-The learned behavior is stored only as a small set of numeric parameters in a JSON file.
+The learned behavior is stored as a small set of numeric parameters in a JSON file.
 
 ## 🔍 What's the Idea?
 
 Traditional learning approaches rely on:
-- conversation memory
-- fine-tuning
-- embeddings or retrieval
+- Conversation memory
+- Fine-tuning on datasets
+- Embeddings or retrieval systems
 
 This project takes a different approach:
 
 **Can an LLM improve future outputs by updating only its generation parameters, using feedback from the current output?**
 
-Think of it as teaching by turning knobs, not by storing examples.
+Think of it as teaching by adjusting knobs, not by storing examples.
 
 ## 🧠 Core Loop
 
@@ -30,12 +30,12 @@ Think of it as teaching by turning knobs, not by storing examples.
 
 3. **Evaluate the response**
    - Word count accuracy
-   - Repetition (rule-based)
-   - Clarity score (using a secondary LLM, 0–1)
+   - Repetition analysis (rule-based)
+   - Clarity score (using a secondary LLM, scored 0 to 1)
 
 4. **Update parameters**
-   - Too long → decrease verbosity & temperature
-   - Too short → increase verbosity & temperature
+   - Too long → decrease verbosity and temperature
+   - Too short → increase verbosity and temperature
    - Repetitive → increase repetition penalty
 
 5. **Save updated parameters**
@@ -77,34 +77,34 @@ All learned behavior is stored in `parameters.json`.
 **Test case:** "Explain quantum computing in 50 words."
 
 - **Starting with high verbosity (1.0)**
-  - → Model already outputs ~48–52 words and stabilizes
+  - Model already outputs approximately 48 to 52 words and stabilizes
 
 - **Starting with low verbosity (0.1)**
-  - → Gradual increase across runs
-  - → 0.10 → 0.146 → 0.20 → 0.32
+  - Gradual increase across runs
+  - Values: 0.10 → 0.146 → 0.20 → 0.32
 
-- **After convergence (verbosity ≈ 0.3–0.4)**
-  - → The model consistently produces ~50 words
+- **After convergence (verbosity approximately 0.3 to 0.4)**
+  - The model consistently produces around 50 words
 
 ### Key Result
 
-Once trained, if you later ask:
+Once trained, if you ask:
 
 ```
 "Explain quantum computing"
 ```
 (without specifying length)
 
-➡️ **The model still outputs ~50 words**, because that behavior is now encoded in the parameters.
+The model still outputs approximately 50 words, because that behavior is now encoded in the parameters.
 
-**No memory. No training. Just learned behavior.**
+No memory. No training. Just learned behavior.
 
 ## ⚠️ Limitations
 
 - Requires multiple runs to converge
-- Explicit prompt instructions (e.g., "exactly 100 words") override learned behavior
+- Explicit prompt instructions (such as "exactly 100 words") override learned behavior
 - Learning is local and task-specific
-- No long-term generalization across domains (by design)
+- No long-term generalization across different domains (by design)
 
 ## 📦 Setup
 
