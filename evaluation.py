@@ -2,6 +2,9 @@ import re
 import json
 from numpy import clip 
 from collections import Counter
+from prompt import * 
+from initialize_llm import *
+from schema_class import * 
 
 
 
@@ -46,7 +49,24 @@ def main(user_input , llm_ans):
     parameters["decoding"]["repetition_penalty"] = min(max(parameters["decoding"]["repetition_penalty"], 1.0), 2.0)
     parameters["decoding"]["top_p"] -= alpha * repetition_error
     parameters["decoding"]["top_p"] = min(max(parameters["decoding"]["top_p"], 0.7), 0.99)
+
+    llm_Clarity_prompt = llm.with_structured_output(Schema)
+    chain = Clarity_prompt | llm_Clarity_prompt
+    result = chain.invoke({
+        'llm_ans' : llm_ans
+    })
+    print(result)
+    clarity_score = result.score
+    clarity_error = 0.5 - clarity_score
+    parameters["weights"]["w_clarity"] += alpha * clarity_error
+
+    parameters["weights"]["w_clarity"] = min(max(parameters["weights"]["w_clarity"], 0.5), 5.0)
     
+
+
+
+
+
 
 
 
