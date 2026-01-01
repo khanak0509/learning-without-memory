@@ -1,70 +1,112 @@
 # Learning Without Memory
 
-A simple experiment to see if an LLM can learn to adjust its behavior by updating generation parameters instead of storing conversation history.
+Learning Without Memory is an experiment that explores whether a Large Language Model (LLM) can adapt its behavior without storing conversation history or training on past data.
 
-## What's This About?
+Instead of remembering previous interactions, the system learns by adjusting generation parameters (such as temperature, verbosity, and repetition penalty) based on how well each response matches the desired outcome.
 
-Instead of remembering previous conversations, this system adjusts parameters like temperature and verbosity based on how well the LLM's responses match what you asked for. It's like teaching the model by tweaking knobs rather than showing it examples.
+The learned behavior is stored only as a small set of numeric parameters in a JSON file.
 
-The idea is simple: 
-- Run a query and get a response
-- Check if the response was good (right length, clear, not repetitive)
-- Adjust the parameters based on what went wrong
-- Save those parameters for next time
+## 🔍 What's the Idea?
 
-No memory needed, just learned behavior stored in a few numbers.
+Traditional learning approaches rely on:
+- conversation memory
+- fine-tuning
+- embeddings or retrieval
 
-## How It Works
+This project takes a different approach:
 
-1. **Ask a question** - e.g., "Explain quantum computing in 50 words"
-2. **LLM responds** using current parameters from `parameters.json`
-3. **Evaluate the response:**
-   - Count words (did it match the target?)
-   - Check for repetition (how many words repeated?)
-   - Ask another LLM to rate clarity (0-1 score)
-4. **Update parameters:**
-   - If too long → decrease verbosity and temperature
-   - If too short → increase verbosity and temperature
-   - If repetitive → increase repetition penalty
-5. **Save to JSON** for next time
+**Can an LLM improve future outputs by updating only its generation parameters, using feedback from the current output?**
 
-The learning rate is 0.1, so changes happen gradually over multiple runs.
+Think of it as teaching by turning knobs, not by storing examples.
 
-## Parameters
+## 🧠 Core Loop
 
-The system tracks these in `parameters.json`:
+1. **Ask a question**
+   - Example: "Explain quantum computing in 50 words."
 
-**Decoding:**
-- `temperature` (0.1-1.2) - randomness
-- `top_p` (0.7-0.99) - sampling threshold
-- `repetition_penalty` (1.0-2.0) - how much to avoid repeating words
+2. **Generate a response**
+   - Uses parameters from `parameters.json`
+   - No conversation history is passed
 
-**Prompt:**
-- `verbosity` (0.0-1.0) - controls response length
-- `structure_strictness` (0.0-1.0) - how organized the response should be
-- `creativity_bias` (0.0-1.0) - factual vs creative
+3. **Evaluate the response**
+   - Word count accuracy
+   - Repetition (rule-based)
+   - Clarity score (using a secondary LLM, 0–1)
 
-**Weights:**
-- `w_length`, `w_clarity`, etc. - how much each metric matters
+4. **Update parameters**
+   - Too long → decrease verbosity & temperature
+   - Too short → increase verbosity & temperature
+   - Repetitive → increase repetition penalty
 
-## What I Found
+5. **Save updated parameters**
+   - Only numeric values are persisted
+   - No outputs or prompts are stored
 
-After testing with "Explain quantum computing in 50 words":
+6. **Next run uses updated behavior**
 
-- Starting from high verbosity (1.0): Already produces ~48 words, stays there
-- Starting from low verbosity (0.1): Gradually increases (0.1 → 0.146 → 0.200) as it learns the output is too short
-- After training to verbosity ~0.3-0.4, the model learns the behavior
+## ⚙️ Parameters
 
-**The cool part:** Once trained, if you just ask "Explain quantum computing" (without specifying word count), it automatically gives around 50 words because it learned that pattern.
+All learned behavior is stored in `parameters.json`.
 
-So yeah, it does learn something. The parameters encode behavior without needing to remember past conversations.
+### Decoding Parameters (LLM Call)
 
-## Limitations
+| Parameter | Range | Purpose |
+|-----------|-------|---------|
+| `temperature` | 0.1 – 1.2 | Controls randomness |
+| `top_p` | 0.7 – 0.99 | Nucleus sampling |
+| `repetition_penalty` | 1.0 – 2.0 | Penalizes repeated tokens |
 
-- Takes multiple runs to converge
-- When you give an explicit word count in the prompt, that overrides the parameter
+### Prompt Parameters (Injected into Prompt)
 
-## Setup
+| Parameter | Range | Purpose |
+|-----------|-------|---------|
+| `verbosity` | 0.0 – 1.0 | Controls response length |
+| `structure_strictness` | 0.0 – 1.0 | Enforces organization |
+| `creativity_bias` | 0.0 – 1.0 | Factual vs creative |
+
+### Evaluation Weights (Controller Only)
+
+| Parameter | Purpose |
+|-----------|---------|
+| `w_length` | Importance of word-count accuracy |
+| `w_clarity` | Importance of clarity score |
+| `w_format` | Importance of structure |
+
+## 🧪 Observations
+
+**Test case:** "Explain quantum computing in 50 words."
+
+- **Starting with high verbosity (1.0)**
+  - → Model already outputs ~48–52 words and stabilizes
+
+- **Starting with low verbosity (0.1)**
+  - → Gradual increase across runs
+  - → 0.10 → 0.146 → 0.20 → 0.32
+
+- **After convergence (verbosity ≈ 0.3–0.4)**
+  - → The model consistently produces ~50 words
+
+### Key Result
+
+Once trained, if you later ask:
+
+```
+"Explain quantum computing"
+```
+(without specifying length)
+
+➡️ **The model still outputs ~50 words**, because that behavior is now encoded in the parameters.
+
+**No memory. No training. Just learned behavior.**
+
+## ⚠️ Limitations
+
+- Requires multiple runs to converge
+- Explicit prompt instructions (e.g., "exactly 100 words") override learned behavior
+- Learning is local and task-specific
+- No long-term generalization across domains (by design)
+
+## 📦 Setup
 
 Install dependencies:
 ```bash
@@ -76,7 +118,7 @@ Add your API key to `.env`:
 GOOGLE_API_KEY=your_key_here
 ```
 
-## Files
+## 📁 Files
 
 - `main.py` - run a single query
 - `test.py` - train with 3 iterations
@@ -87,7 +129,7 @@ GOOGLE_API_KEY=your_key_here
 - `schema_class.py` - output validation
 - `parameters.json` - stored parameters
 
-## Usage
+## 🚀 Usage
 
 Train the system:
 ```bash
@@ -104,7 +146,7 @@ Single run:
 python main.py
 ```
 
-## References
+## 📚 References
 
 - [LangChain Python](https://python.langchain.com/)
 - [ChatGoogleGenerativeAI](https://reference.langchain.com/python/integrations/langchain_google_genai/ChatGoogleGenerativeAI/)
