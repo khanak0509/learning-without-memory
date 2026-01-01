@@ -4,7 +4,7 @@
     "top_p": 0.9,
     "repetition_penalty": 1.1
   },
-
+  
   "prompt": {
     "verbosity": 0.5,
     "structure_strictness": 0.8,
@@ -19,7 +19,6 @@
   },
 
   "meta": {
-    "learning_rate": 0.1,
-    "version": "1.0"
+    "learning_rate": 0.1
   }
 }
