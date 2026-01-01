@@ -53,16 +53,16 @@ After testing with "Explain quantum computing in 50 words":
 
 - Starting from high verbosity (1.0): Already produces ~48 words, stays there
 - Starting from low verbosity (0.1): Gradually increases (0.1 → 0.146 → 0.200) as it learns the output is too short
-- After training to verbosity ~0.3-0.4, queries without word limits produce 40-70 word responses
+- After training to verbosity ~0.3-0.4, the model learns the behavior
+
+**The cool part:** Once trained, if you just ask "Explain quantum computing" (without specifying word count), it automatically gives around 50 words because it learned that pattern.
 
 So yeah, it does learn something. The parameters encode behavior without needing to remember past conversations.
 
 ## Limitations
 
 - Takes multiple runs to converge
-- LLM doesn't always respect the verbosity parameter perfectly
 - When you give an explicit word count in the prompt, that overrides the parameter
-- Learned parameters might not work well for totally different types of questions
 
 ## Setup
 
