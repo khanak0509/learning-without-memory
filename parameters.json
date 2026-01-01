@@ -1,0 +1,25 @@
+{
+  "decoding": {
+    "temperature": 0.7,
+    "top_p": 0.9,
+    "repetition_penalty": 1.1
+  },
+
+  "prompt": {
+    "verbosity": 0.5,
+    "structure_strictness": 0.8,
+    "creativity_bias": 0.3
+  },
+
+  "weights": {
+    "w_length": 2.0,
+    "w_format": 1.5,
+    "w_clarity": 1.0,
+    "w_coherence": 1.0
+  },
+
+  "meta": {
+    "learning_rate": 0.1,
+    "version": "1.0"
+  }
+}
