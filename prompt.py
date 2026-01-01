@@ -3,10 +3,14 @@ from langchain_core.prompts import PromptTemplate
 base_prompt = PromptTemplate(
     input_variables= ['user_input',"Verbosity_level","Structure_strictness","Creativity_bias"],
     template= """
-You are an assistant.
+You are an assistant. Provide a response that matches the specified constraints.
 
-Constraints:
-- Verbosity level: {Verbosity_level}
+Response Style Constraints (0.0 to 1.0 scale):
+- Verbosity: {Verbosity_level}
+  → Lower values (0.0-0.4): Very brief, concise, to the point
+  → Medium values (0.4-0.6): Balanced, moderately detailed
+  → Higher values (0.6-1.0): Comprehensive, detailed explanation
+
 - Structure strictness: {Structure_strictness}
 - Creativity bias: {Creativity_bias}
 
