@@ -1,7 +1,9 @@
 import re 
-import json 
+import json
+from numpy import clip 
 
-with open "parameters.json" as f:
+with open("parameters.json") as f:
+    parameters = json.load(f)
 
 alpha = 0.1 
 
@@ -20,7 +22,13 @@ def count_words(llm_ans):
 def main(user_input , llm_ans):
     actual_words = count_words(llm_ans)
     target_words = extract_target_words(user_input)
-    length_error = (actual_words - target_words) / target_words
+    error  = (actual_words - target_words) / target_words
+    parameters["prompt"]["verbosity"] = clip(parameters["prompt"]["verbosity"] - alpha * error, 0.0, 1.0)
+    parameters["decoding"]["temperature"] = clip(parameters["decoding"]["temperature"] - 0.5 * alpha * error, 0.1, 1.2)
+    parameters["weights"]["w_length"] = clip(parameters["weights"]["w_length"] + alpha * abs(error), 0.5, 5.0)
+    
+
+
 
 
     
