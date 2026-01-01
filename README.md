@@ -6,147 +6,125 @@ Rather than remembering previous interactions, the system adjusts generation par
 
 The learned behavior is stored as a small set of numeric parameters in a JSON file.
 
-## 🔍 What's the Idea?
+## What's the Idea?
 
-Traditional learning approaches rely on:
-- Conversation memory
-- Fine-tuning on datasets
-- Embeddings or retrieval systems
+Traditional learning approaches rely on conversation memory, fine-tuning on datasets, or embeddings and retrieval systems.
 
-This project takes a different approach:
-
-**Can an LLM improve future outputs by updating only its generation parameters, using feedback from the current output?**
+This project takes a different approach: Can an LLM improve future outputs by updating only its generation parameters, using feedback from the current output?
 
 Think of it as teaching by adjusting knobs, not by storing examples.
 
-## 🧠 Core Loop
+## How it Works
 
-1. **Ask a question**
-   - Example: "Explain quantum computing in 50 words."
+The system follows a simple loop:
 
-2. **Generate a response**
-   - Uses parameters from `parameters.json`
-   - No conversation history is passed
+First, you ask a question (for example, "Explain quantum computing in 50 words").
 
-3. **Evaluate the response**
-   - Word count accuracy
-   - Repetition analysis (rule-based)
-   - Clarity score (using a secondary LLM, scored 0 to 1)
+The LLM generates a response using parameters from parameters.json. No conversation history is passed.
 
-4. **Update parameters**
-   - Too long → decrease verbosity and temperature
-   - Too short → increase verbosity and temperature
-   - Repetitive → increase repetition penalty
+Then the system evaluates the response by checking word count accuracy, analyzing repetition, and getting a clarity score from a secondary LLM (scored 0 to 1).
 
-5. **Save updated parameters**
-   - Only numeric values are persisted
-   - No outputs or prompts are stored
+Based on the evaluation, it updates the parameters. If the response was too long, it decreases verbosity and temperature. If too short, it increases them. If repetitive, it increases the repetition penalty.
 
-6. **Next run uses updated behavior**
+The updated parameters get saved to the JSON file. Only numeric values are stored, no outputs or prompts.
 
-## ⚙️ Parameters
+The next run uses these updated parameters, so the behavior gradually improves.
 
-All learned behavior is stored in `parameters.json`.
+## Parameters
 
-### Decoding Parameters (LLM Call)
+All learned behavior is stored in parameters.json.
 
-| Parameter | Range | Purpose |
-|-----------|-------|---------|
-| `temperature` | 0.1 – 1.2 | Controls randomness |
-| `top_p` | 0.7 – 0.99 | Nucleus sampling |
-| `repetition_penalty` | 1.0 – 2.0 | Penalizes repeated tokens |
+The system tracks three types of parameters:
 
-### Prompt Parameters (Injected into Prompt)
+**Decoding Parameters** (used when calling the LLM):
+- temperature (range 0.1 to 1.2) controls randomness
+- top_p (range 0.7 to 0.99) for nucleus sampling
+- repetition_penalty (range 1.0 to 2.0) penalizes repeated tokens
 
-| Parameter | Range | Purpose |
-|-----------|-------|---------|
-| `verbosity` | 0.0 – 1.0 | Controls response length |
-| `structure_strictness` | 0.0 – 1.0 | Enforces organization |
-| `creativity_bias` | 0.0 – 1.0 | Factual vs creative |
+**Prompt Parameters** (injected into the prompt):
+- verbosity (range 0.0 to 1.0) controls response length
+- structure_strictness (range 0.0 to 1.0) enforces organization
+- creativity_bias (range 0.0 to 1.0) balances factual vs creative responses
 
-### Evaluation Weights (Controller Only)
+**Evaluation Weights** (used by the controller):
+- w_length determines importance of word-count accuracy
+- w_clarity determines importance of clarity score
+- w_format determines importance of structure
 
-| Parameter | Purpose |
-|-----------|---------|
-| `w_length` | Importance of word-count accuracy |
-| `w_clarity` | Importance of clarity score |
-| `w_format` | Importance of structure |
+## What I Found
 
-## 🧪 Observations
+I tested this with "Explain quantum computing in 50 words."
 
-**Test case:** "Explain quantum computing in 50 words."
+When starting with high verbosity (1.0), the model already outputs about 48 to 52 words and stays stable.
 
-- **Starting with high verbosity (1.0)**
-  - Model already outputs approximately 48 to 52 words and stabilizes
+When starting with low verbosity (0.1), there's gradual increase across runs. The verbosity goes from 0.10 to 0.146 to 0.20 to 0.32.
 
-- **Starting with low verbosity (0.1)**
-  - Gradual increase across runs
-  - Values: 0.10 → 0.146 → 0.20 → 0.32
+After convergence (verbosity around 0.3 to 0.4), the model consistently produces about 50 words.
 
-- **After convergence (verbosity approximately 0.3 to 0.4)**
-  - The model consistently produces around 50 words
-
-### Key Result
-
-Once trained, if you ask:
-
-```
-"Explain quantum computing"
-```
-(without specifying length)
-
-The model still outputs approximately 50 words, because that behavior is now encoded in the parameters.
+The interesting part is that once trained, if you just ask "Explain quantum computing" without specifying length, the model still outputs about 50 words. That behavior is now encoded in the parameters.
 
 No memory. No training. Just learned behavior.
 
-## ⚠️ Limitations
+## Limitations
 
-- Requires multiple runs to converge
-- Explicit prompt instructions (such as "exactly 100 words") override learned behavior
-- Learning is local and task-specific
-- No long-term generalization across different domains (by design)
+The system requires multiple runs to converge. Explicit prompt instructions like "exactly 100 words" will override the learned behavior. The learning is local and task-specific, with no long-term generalization across different domains (this is by design).
 
-## 📦 Setup
+## Setup
 
-Install dependencies:
+First, install the required dependencies:
+
 ```bash
 pip install -r requirements.txt
 ```
 
-Add your API key to `.env`:
+Then create a .env file and add your API key:
+
 ```
 GOOGLE_API_KEY=your_key_here
 ```
 
-## 📁 Files
+## Files
 
-- `main.py` - run a single query
-- `test.py` - train with 3 iterations
-- `test_learned_behavior.py` - test without explicit word limits
-- `evaluation.py` - calculate metrics and update parameters
-- `llm_config.py` - LLM setup
-- `prompt.py` - prompt templates
-- `schema_class.py` - output validation
-- `parameters.json` - stored parameters
+The project includes these files:
 
-## 🚀 Usage
+main.py runs a single query
 
-Train the system:
+test.py trains the system with 3 iterations
+
+test_learned_behavior.py tests without explicit word limits
+
+evaluation.py calculates metrics and updates parameters
+
+llm_config.py handles LLM setup
+
+prompt.py contains prompt templates
+
+schema_class.py defines output validation
+
+parameters.json stores the learned parameters
+
+## Usage
+
+To train the system, run:
+
 ```bash
 python test.py
 ```
 
-Test learned behavior:
+To test the learned behavior:
+
 ```bash
 python test_learned_behavior.py
 ```
 
-Single run:
+For a single run:
+
 ```bash
 python main.py
 ```
 
-## 📚 References
+## References
 
-- [LangChain Python](https://python.langchain.com/)
-- [ChatGoogleGenerativeAI](https://reference.langchain.com/python/integrations/langchain_google_genai/ChatGoogleGenerativeAI/)
+LangChain Python documentation: https://python.langchain.com/
+
+ChatGoogleGenerativeAI reference: https://reference.langchain.com/python/integrations/langchain_google_genai/ChatGoogleGenerativeAI/
